@@ -3,6 +3,8 @@
 ; NSIS Installer build script
 ;--------------------------------
 
+!include "MUI2.nsh"
+
 !addplugindir "nsisFirewall"
 !include "FileFunc.nsh"
 
@@ -10,11 +12,21 @@
 !define VERSION 1.6.1.0
 Name "Munin Node for Windows ${VERSION} (Beta)"
 
+!ifdef MUNIN_ARCH_X64
+	!define ARCH x64
+!else
+	!define ARCH win32
+!endif
+
 ; The file to write
-OutFile "munin-node-win32-${VERSION}-installer.exe"
+OutFile "munin-node-${ARCH}-${VERSION}-installer.exe"
 
 ; The default installation directory
+!ifdef MUNIN_ARCH_X64
+InstallDir "$PROGRAMFILES64\Munin Node for Windows"
+!else
 InstallDir "$PROGRAMFILES\Munin Node for Windows"
+!endif
 
 ; Registry key to check for directory (so if you install again, it will 
 ; overwrite the old one automatically)
@@ -28,19 +40,29 @@ VIAddVersionKey /LANG=${LANG_ENGLISH} "ProductName" "Munin Node for Windows"
 VIAddVersionKey /LANG=${LANG_ENGLISH} "Comments" "NSIS Installer for Munin Node for Windows"
 VIAddVersionKey /LANG=${LANG_ENGLISH} "LegalCopyright" "Copyright (C) 2006-2011 Jory 'jcsston' Stone, modified by Adam Groszer"
 VIAddVersionKey /LANG=${LANG_ENGLISH} "FileDescription" "Munin Node for Windows"
-VIAddVersionKey /LANG=${LANG_ENGLISH} "InternalName" "munin-node-win32"
+VIAddVersionKey /LANG=${LANG_ENGLISH} "InternalName" "munin-node-${ARCH}"
 VIAddVersionKey /LANG=${LANG_ENGLISH} "FileVersion" "${VERSION}"
 VIAddVersionKey /LANG=${LANG_ENGLISH} "ProductVersion" "${VERSION}"
   
 ;--------------------------------
 
-; Pages
-Page components
-Page directory
-Page instfiles
+!define MUI_ABORTWARNING
 
-UninstPage uninstConfirm
-UninstPage instfiles
+; Pages
+!define MUI_WELCOMEPAGE_TITLE_3LINES
+!insertmacro MUI_PAGE_WELCOME
+!define MUI_COMPONENTSPAGE_NODESC
+!insertmacro MUI_PAGE_COMPONENTS
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_INSTFILES
+!define MUI_FINISHPAGE_TITLE_3LINES
+!insertmacro MUI_PAGE_FINISH
+
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+!insertmacro MUI_UNPAGE_FINISH
+
+!insertmacro MUI_LANGUAGE "English"
 
 ;--------------------------------
 
@@ -53,7 +75,11 @@ Section "Munin Node for Windows (required)"
   SetOutPath $INSTDIR
   
   ; Put file there
+!ifdef MUNIN_ARCH_X64
+  File "..\bin.x64\Release\munin-node.exe"
+!else
   File "..\bin\Release\munin-node.exe"
+!endif
   File "..\munin-node.ini"
   
   ; Write the installation path into the registry
